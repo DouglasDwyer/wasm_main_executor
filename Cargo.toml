@@ -1,0 +1,12 @@
+[package]
+name = "wasm_main_executor"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+arc-swap = "1.6.0"
+futures = { version = "0.3.28", default-features = false, features = [ "executor" ] }
+gloo-timers = "0.2.6"
+once_cell = "1.17.1"
+thiserror = "1.0.30"
+web-sys = { version = "0.3.24", features = [ "Window" ] }
