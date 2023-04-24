@@ -29,7 +29,8 @@ type SendableFuture = dyn FnOnce() -> Pin<Box<dyn Future<Output = ()>>> + Send;
 /// The queue to which all threads submit newly-spawned tasks.
 static TASK_QUEUE: OnceCell<UnboundedSender<Box<SendableFuture>>> = OnceCell::new();
 
-/// Initializes the main thread executor. This function must be called from the main thread.
+/// Initializes the main thread executor. This function must be called from the main thread
+/// before spawning any futures.
 pub fn initialize() -> Result<(), ExecutorInitializationError> {
     let mut executor = MainExecutor::new()?;
     Interval::new(0, move || executor.poll()).forget();
