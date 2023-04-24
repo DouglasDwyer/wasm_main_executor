@@ -118,7 +118,12 @@ impl<T> Future for FutureSynchronization<T> {
         }
         else {
             self.waker.store(Some(Arc::new(cx.waker().clone())));
-            Poll::Pending
+            if let Ok(Some(res)) = self.receiver.try_next() {
+                Poll::Ready(res)
+            }
+            else {
+                Poll::Pending
+            }
         }
     }
 }
