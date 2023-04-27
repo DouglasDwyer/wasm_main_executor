@@ -113,17 +113,12 @@ impl<T> Future for FutureSynchronization<T> {
     type Output = T;
 
     fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
+        self.waker.store(Some(Arc::new(cx.waker().clone())));
         if let Ok(Some(res)) = self.receiver.try_next() {
             Poll::Ready(res)
         }
         else {
-            self.waker.store(Some(Arc::new(cx.waker().clone())));
-            if let Ok(Some(res)) = self.receiver.try_next() {
-                Poll::Ready(res)
-            }
-            else {
-                Poll::Pending
-            }
+            Poll::Pending
         }
     }
 }
