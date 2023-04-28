@@ -2,10 +2,17 @@
 name = "wasm_main_executor"
 version = "0.1.0"
 edition = "2021"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/DouglasDwyer/wasm_main_executor"
+readme = "README.md"
+description = """
+Run futures from web workers on the main browser thread.
+"""
 
 [dependencies]
 arc-swap = "1.6.0"
-futures = { version = "0.3.28", default-features = false, features = [ "executor" ] }
+dummy-waker = "1.1.0"
+futures = { version = "0.3.28", default-features = false }
 gloo-timers = "0.2.6"
 once_cell = "1.17.1"
 thiserror = "1.0.30"

@@ -1,11 +1,13 @@
 #![deny(warnings)]
 
 use arc_swap::*;
-use futures::executor::*;
+use dummy_waker::*;
+use futures::*;
 use futures::channel::mpsc::*;
 use futures::task::*;
 use gloo_timers::callback::*;
 use once_cell::sync::*;
+use std::collections::*;
 use std::future::*;
 use std::pin::*;
 use std::sync::*;
@@ -57,7 +59,7 @@ pub fn spawn<F: 'static + IntoFuture + Send>(f: F) -> impl Future<Output = F::Ou
 
 /// Polls futures spawned on the main thread to completion.
 struct MainExecutor {
-    futures: LocalPool,
+    futures: VecDeque<Pin<Box<dyn Future<Output = ()>>>>,
     receiver: UnboundedReceiver<Box<SendableFuture>>
 }
 
@@ -69,7 +71,7 @@ impl MainExecutor {
             TASK_QUEUE.set(send).map_err(|_| ExecutorInitializationError::AlreadyStarted())?;
 
             Ok(Self {
-                futures: LocalPool::new(),
+                futures: VecDeque::new(),
                 receiver
             })
         }
@@ -81,13 +83,23 @@ impl MainExecutor {
     /// Polls all currently-executing futures for this interval.
     pub fn poll(&mut self) {
         self.add_new_futures();
-        self.futures.run_until_stalled();
+        
+        let waker = dummy_waker();
+        let mut cx = Context::from_waker(&waker);
+        let to_poll = self.futures.len();
+        for _ in 0..to_poll {
+            let mut fut = self.futures.pop_front().expect("Could not take future from futures queue.");
+            match fut.poll_unpin(&mut cx) {
+                Poll::Pending => self.futures.push_back(fut),
+                Poll::Ready(()) => {}
+            }
+        }
     }
 
     /// Adds all newly-spawned futures to the threadpool.
     fn add_new_futures(&mut self) {
         while let Ok(Some(fut)) = self.receiver.try_next() {
-            self.futures.spawner().spawn_local(fut()).expect("Could not spawn future on main thread.");
+            self.futures.push_back(fut());
         }
     }
 }
