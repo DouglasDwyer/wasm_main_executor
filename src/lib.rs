@@ -1,16 +1,44 @@
 #![deny(warnings)]
 
+//! ### Run futures on the main browser thread
+//! 
+//! Certain tasks, like creating an `AudioContext` or `RtcPeerConnection`, can only be performed on the main browser thread.
+//! `wasm_main_executor` provides an easy way to send futures to the main browser thread from any context. This allows
+//! web workers to spawn main-threaded tasks and await their completion, and facilitates the implementation of cross-thread
+//! polyfills/shims.
+//! 
+//! ## Usage
+//! 
+//! The following is a simple example of executor usage:
+//! 
+//! ```rust
+//! async fn test_future() -> i32 {
+//!     // Do some async or main-threaded work...
+//!     2
+//! }
+//! 
+//! // Start the executor. This must be called from the main browser thread.
+//! wasm_main_executor::initialize().unwrap();
+//! 
+//! // Futures may be spawned on background threads using the executor.
+//! // The future runs on the main thread.
+//! let fut = wasm_main_executor::spawn(test_future());
+//! 
+//! // A future is returned which may be awaited on the background thread.
+//! assert_eq!(2, futures::executor::block_on(fut));
+//! ```
+
 use arc_swap::*;
 use dummy_waker::*;
 use futures::*;
 use futures::channel::mpsc::*;
-use futures::task::*;
 use gloo_timers::callback::*;
 use once_cell::sync::*;
 use std::collections::*;
 use std::future::*;
 use std::pin::*;
 use std::sync::*;
+use std::task::*;
 use thiserror::*;
 use web_sys::*;
 

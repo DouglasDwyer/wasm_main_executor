@@ -6,8 +6,8 @@
 
 Certain tasks, like creating an `AudioContext` or `RtcPeerConnection`, can only be performed on the main browser thread.
 `wasm_main_executor` provides an easy way to send futures to the main browser thread from any context. This allows
-web workers to spawn main-threaded tasks and await their completion. As such, the `wasm_main_executor` crate is primarily
-intended for the implementation of polyfills/shims that allow cross-threaded functionality.
+web workers to spawn main-threaded tasks and await their completion, and facilitates the implementation of cross-thread
+polyfills/shims.
 
 ## Usage
 
